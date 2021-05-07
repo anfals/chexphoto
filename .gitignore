@@ -156,3 +156,5 @@ fabric.properties
 # ML
 data/*
 !data/.gitkeep
+
+*.tar

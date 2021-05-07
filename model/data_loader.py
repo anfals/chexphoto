@@ -13,7 +13,8 @@ import math
 
 # Resize to 320x320 and match DenseNet-121 requirements
 preprocess = transforms.Compose([
-    transforms.Resize(320),
+    transforms.Resize((320, 320)),
+    transforms.Grayscale(num_output_channels=3),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
 ])
@@ -55,14 +56,14 @@ class CheXPertDataset(Dataset):
 
             if os.path.exists(file_path):
                 self.filenames.append(file_path)
-                label = torch.zeros((1, 5))
+                label = torch.zeros((5,))
                 for index, observation in enumerate(CheXPertDataset.observations):
                     o_result = row[observation]
                     # We are going with the U-Ones approach
                     if math.isnan(o_result) or o_result == 0:
-                        label[0][index] = 0
+                        label[index] = 0
                     else:
-                        label[0][index] = 1
+                        label[index] = 1
                 self.labels.append(label)
 
         self.transform = transform
@@ -111,7 +112,7 @@ def fetch_dataloader(types, data_dir, params):
     train_df = train_df.sample(frac=1, random_state=2)
 
     # Split train into our training and validation sets
-    num_train = int(train_df.shape[0] * 0.9)
+    num_train = int(train_df.shape[0] * 0.7)
     train_df, val_df = train_df.iloc[:num_train, :], train_df.iloc[num_train:, :]
 
     dfs = [train_df, val_df, test_df]

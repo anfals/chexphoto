@@ -17,7 +17,7 @@ import model.data_loader as data_loader
 from evaluate import evaluate
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--data_dir', default='data/64x64_SIGNS',
+parser.add_argument('--data_dir', default='data',
                     help="Directory containing the dataset")
 parser.add_argument('--model_dir', default='experiments/base_model',
                     help="Directory containing params.json")
@@ -26,7 +26,7 @@ parser.add_argument('--restore_file', default=None,
                     training")  # 'best' or 'train'
 
 
-def train(model, optimizer, loss_fn, dataloader, metrics, params):
+def train(model, optimizer, loss_fn, dataloader, params):
     """Train the model on `num_steps` batches
 
     Args:
@@ -34,7 +34,6 @@ def train(model, optimizer, loss_fn, dataloader, metrics, params):
         optimizer: (torch.optim) optimizer for parameters of model
         loss_fn: a function that takes batch_output and batch_labels and computes the loss for the batch
         dataloader: (DataLoader) a torch.utils.data.DataLoader object that fetches training data
-        metrics: (dict) a dictionary of functions that compute a metric using the output and labels of each batch
         params: (Params) hyperparameters
         num_steps: (int) number of batches to train on, each of size params.batch_size
     """
@@ -53,9 +52,6 @@ def train(model, optimizer, loss_fn, dataloader, metrics, params):
             if params.cuda:
                 train_batch, labels_batch = train_batch.cuda(
                     non_blocking=True), labels_batch.cuda(non_blocking=True)
-            # convert to torch Variables
-            train_batch, labels_batch = Variable(
-                train_batch), Variable(labels_batch)
 
             # compute model output and loss
             output_batch = model(train_batch)
@@ -75,8 +71,7 @@ def train(model, optimizer, loss_fn, dataloader, metrics, params):
                 labels_batch = labels_batch.data.cpu().numpy()
 
                 # compute all metrics on this batch
-                summary_batch = {metric: metrics[metric](output_batch, labels_batch)
-                                 for metric in metrics}
+                summary_batch = net.calculate_metrics(output_batch, labels_batch)
                 summary_batch['loss'] = loss.item()
                 summ.append(summary_batch)
 
@@ -116,20 +111,20 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
         logging.info("Restoring parameters from {}".format(restore_path))
         utils.load_checkpoint(restore_path, model, optimizer)
 
-    best_val_acc = 0.0
+    best_auc_average = 0.0
 
     for epoch in range(params.num_epochs):
         # Run one epoch
         logging.info("Epoch {}/{}".format(epoch + 1, params.num_epochs))
 
         # compute number of batches in one epoch (one full pass over the training set)
-        train(model, optimizer, loss_fn, train_dataloader, metrics, params)
+        train(model, optimizer, loss_fn, train_dataloader, params)
 
         # Evaluate for one epoch on validation set
         val_metrics = evaluate(model, loss_fn, val_dataloader, metrics, params)
 
-        val_acc = val_metrics['accuracy']
-        is_best = val_acc >= best_val_acc
+        val_auc_average = val_metrics['AUC Average']
+        is_best = val_auc_average >= best_auc_average
 
         # Save weights
         utils.save_checkpoint({'epoch': epoch + 1,
@@ -141,7 +136,7 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
         # If best_eval, best_save_path
         if is_best:
             logging.info("- Found new best accuracy")
-            best_val_acc = val_acc
+            best_auc_average = val_auc_average
 
             # Save best val metrics in a json file in the model directory
             best_json_path = os.path.join(
@@ -186,7 +181,8 @@ if __name__ == '__main__':
     logging.info("- done.")
 
     # Define the model and optimizer
-    model = net.Net(params).cuda() if params.cuda else net.Net(params)
+    model = net.build_pretrained_densenet()
+    model = model.cuda() if params.cuda else model
     optimizer = optim.Adam(model.parameters(), lr=params.learning_rate)
 
     # fetch loss function and metrics

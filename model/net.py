@@ -1,10 +1,16 @@
 """Defines the neural network, losss function and metrics"""
+import math
 
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.models as models
+
+from sklearn import metrics
+from sklearn.metrics import matthews_corrcoef, auc, roc_curve
+
+from model.data_loader import CheXPertDataset
 
 
 class Net(nn.Module):
@@ -124,6 +130,42 @@ def accuracy(outputs, labels):
     outputs = np.argmax(outputs, axis=1)
     return np.sum(outputs==labels)/float(labels.size)
 
+def calculate_metrics(outputs, labels):
+    """
+    Compute various metrics given outputs and labels, returning a dictionary of the metrics
+    """
+
+    # MCC for all
+    mcc_sum = 0
+    auc_sum = 0
+
+    metrics_dict = {}
+    for index, observation in enumerate(CheXPertDataset.observations):
+        cur_labels, cur_predictions = labels[:, index], np.rint(outputs[:, index])
+        mcc_value = matthews_corrcoef(cur_labels, cur_predictions)
+
+        fpr, tpr, thresholds = roc_curve(cur_labels, cur_predictions)
+        auc_value = auc(fpr, tpr)
+        auc_value = 0 if math.isnan(auc_value) else auc_value
+
+        metrics_dict[f'{observation} MCC'] = mcc_value
+        metrics_dict[f'{observation} AUC'] = auc_value
+
+        mcc_sum += mcc_value
+        auc_sum += auc_value
+
+    metrics_dict["MCC Average"] = mcc_sum / len(CheXPertDataset.observations)
+    metrics_dict["AUC Average"] = auc_sum / len(CheXPertDataset.observations)
+
+    return metrics_dict
+
+
+
+
+
+
+
+
 
 # maintain all metrics required in this dictionary- these are used in the training and evaluation loops
 metrics = {
@@ -131,4 +173,4 @@ metrics = {
     # could add more metrics such as accuracy for each token type
 }
 
-build_pretrained_densenet()
+# metrics ["Pleural Effusion", "Edema", "Atelectasis", "Consolidation", "Cardiomegaly"] MCC, AUC for all these guys

@@ -1,0 +1,15 @@
+{
+    "Pleural Effusion MCC": 0.0,
+    "Pleural Effusion AUC": 0.0,
+    "Edema MCC": 0.0,
+    "Edema AUC": 0.0,
+    "Atelectasis MCC": 0.0,
+    "Atelectasis AUC": 0.5,
+    "Consolidation MCC": 0.0,
+    "Consolidation AUC": 0.0,
+    "Cardiomegaly MCC": 0.0,
+    "Cardiomegaly AUC": 0.5,
+    "MCC Average": 0.0,
+    "AUC Average": 0.2,
+    "loss": 0.34792765974998474
+}

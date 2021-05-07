@@ -36,8 +36,10 @@ def evaluate(model, loss_fn, dataloader, metrics, params):
     # set model to evaluation mode
     model.eval()
 
-    # summary for current eval loop
-    summ = []
+    all_outputs = None
+    all_labels = None
+    num_batches = 0
+    running_loss = 0
 
     # compute metrics over the dataset
     for data_batch, labels_batch in dataloader:
@@ -46,30 +48,34 @@ def evaluate(model, loss_fn, dataloader, metrics, params):
         if params.cuda:
             data_batch, labels_batch = data_batch.cuda(
                 non_blocking=True), labels_batch.cuda(non_blocking=True)
-        # fetch the next evaluation batch
-        data_batch, labels_batch = Variable(data_batch), Variable(labels_batch)
 
         # compute model output
         output_batch = model(data_batch)
         loss = loss_fn(output_batch, labels_batch)
 
-        # extract data from torch Variable, move to cpu, convert to numpy arrays
+        # extract data move to cpu, convert to numpy arrays
         output_batch = output_batch.data.cpu().numpy()
         labels_batch = labels_batch.data.cpu().numpy()
 
-        # compute all metrics on this batch
-        summary_batch = {metric: metrics[metric](output_batch, labels_batch)
-                         for metric in metrics}
-        summary_batch['loss'] = loss.item()
-        summ.append(summary_batch)
+        # Update running stats
+        num_batches += 1
+        running_loss += loss.item()
+        if all_outputs == None:
+            all_outputs = output_batch
+            all_labels = labels_batch
+        else:
+            all_outputs = np.concatenate([all_outputs, output_batch], axis=0)
+            all_labels = np.concatenate([all_labels, labels_batch], axis=0)
+
 
     # compute mean of all metrics in summary
-    metrics_mean = {metric: np.mean([x[metric]
-                                     for x in summ]) for metric in summ[0]}
+    metrics_dict = net.calculate_metrics(all_outputs, all_labels)
+    metrics_dict["loss"] = running_loss / num_batches
+
     metrics_string = " ; ".join("{}: {:05.3f}".format(k, v)
-                                for k, v in metrics_mean.items())
+                                for k, v in metrics_dict.items())
     logging.info("- Eval metrics : " + metrics_string)
-    return metrics_mean
+    return metrics_dict
 
 
 if __name__ == '__main__':
