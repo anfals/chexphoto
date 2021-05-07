@@ -150,12 +150,14 @@ def calculate_metrics(outputs, labels):
 
         metrics_dict[f'{observation} MCC'] = mcc_value
         metrics_dict[f'{observation} AUC'] = auc_value
+        metrics_dict[f'{observation} Accuracy'] = np.average(cur_labels == cur_predictions)
 
         mcc_sum += mcc_value
         auc_sum += auc_value
 
     metrics_dict["MCC Average"] = mcc_sum / len(CheXPertDataset.observations)
     metrics_dict["AUC Average"] = auc_sum / len(CheXPertDataset.observations)
+    metrics_dict["Overall Accuracy"] = np.average(np.rint(outputs) == labels)
 
     return metrics_dict
 

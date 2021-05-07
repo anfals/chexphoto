@@ -1,15 +1,21 @@
 {
     "Pleural Effusion MCC": 0.0,
     "Pleural Effusion AUC": 0.0,
+    "Pleural Effusion Accuracy": 1.0,
     "Edema MCC": 0.0,
     "Edema AUC": 0.0,
+    "Edema Accuracy": 0.3333333333333333,
     "Atelectasis MCC": 0.5,
     "Atelectasis AUC": 0.75,
+    "Atelectasis Accuracy": 0.6666666666666666,
     "Consolidation MCC": 0.0,
     "Consolidation AUC": 0.0,
+    "Consolidation Accuracy": 0.3333333333333333,
     "Cardiomegaly MCC": 0.5,
     "Cardiomegaly AUC": 0.75,
+    "Cardiomegaly Accuracy": 0.6666666666666666,
     "MCC Average": 0.2,
     "AUC Average": 0.3,
+    "Overall Accuracy": 0.6,
     "loss": 0.7218502759933472
 }
