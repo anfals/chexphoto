@@ -94,8 +94,7 @@ def build_pretrained_densenet():
     # Start with pretrained densenet
     model = models.densenet121(pretrained=True)
     model.classifier = nn.Sequential(
-        nn.Linear(model.classifier.in_features, 5),
-        nn.Sigmoid()
+        nn.Linear(model.classifier.in_features, 5)
     )
 
     # We are going to freeze all the but the last denseblock and the classifier
@@ -142,16 +141,21 @@ def accuracy(outputs, labels):
 
 def calculate_metrics(outputs, labels):
     """
-    Compute various metrics given outputs and labels, returning a dictionary of the metrics
+    Compute various metrics given outputs (as logits) and labels, returning a dictionary of the metrics
     """
 
     # MCC for all
     mcc_sum = 0
     auc_sum = 0
+    sigmoid = lambda x: 1/(1 + np.exp(-x))
 
     metrics_dict = {}
     for index, observation in enumerate(CheXPertDataset.observations):
-        cur_labels, cur_predictions, cur_predictions_rounded = labels[:, index], outputs[:, index], np.rint(outputs[:, index])
+        cur_labels, cur_logits = labels[:, index], outputs[:, index]
+        # Apply sigmoid on the outputs
+        cur_predictions = sigmoid(cur_logits)
+
+        cur_predictions_rounded = np.rint(cur_predictions)
         mcc_value = matthews_corrcoef(cur_labels, cur_predictions_rounded)
 
         fpr, tpr, thresholds = roc_curve(cur_labels, cur_predictions)
@@ -174,7 +178,7 @@ def calculate_metrics(outputs, labels):
 
     metrics_dict["MCC Average"] = mcc_sum / len(CheXPertDataset.observations)
     metrics_dict["AUC Average"] = auc_sum / len(CheXPertDataset.observations)
-    metrics_dict["Overall Accuracy"] = np.average(np.rint(outputs) == labels)
+    metrics_dict["Overall Accuracy"] = np.average(np.rint(sigmoid(outputs)) == labels)
 
     return metrics_dict
 
