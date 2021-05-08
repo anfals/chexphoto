@@ -13,12 +13,13 @@ import model.net as net
 import model.data_loader as data_loader
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--data_dir', default='data/64x64_SIGNS',
+parser.add_argument('--data_dir', default='data',
                     help="Directory containing the dataset")
 parser.add_argument('--model_dir', default='experiments/base_model',
                     help="Directory containing params.json")
 parser.add_argument('--restore_file', default='best', help="name of the file in --model_dir \
                      containing weights to load")
+parser.add_argument('--dataloader', default="val", help="dataloader to use")
 
 
 def evaluate(model, loss_fn, dataloader, params, calculate_full_metrics=True, limit_number_iterations=False):
@@ -114,16 +115,16 @@ if __name__ == '__main__':
     logging.info("Creating the dataset...")
 
     # fetch dataloaders
-    dataloaders = data_loader.fetch_dataloader(['test'], args.data_dir, params)
-    test_dl = dataloaders['test']
+    dataloaders = data_loader.fetch_dataloader([args.dataloader], args.data_dir, params)
+    test_dl = dataloaders[args.dataloader]
 
     logging.info("- done.")
 
     # Define the model
-    model = net.Net(params).cuda() if params.cuda else net.Net(params)
+    model = net.build_pretrained_densenet()
+    model = model.cuda() if params.cuda else model
 
     loss_fn = nn.BCELoss()
-    metrics = net.metrics
 
     logging.info("Starting evaluation")
 
