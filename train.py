@@ -26,14 +26,14 @@ parser.add_argument('--restore_file', default=None,
                     training")  # 'best' or 'train'
 
 
-def train(model, optimizer, loss_fn, dataloader, params):
+def train(model, optimizer, loss_fn, train_dataloader, val_dataloader, params):
     """Train the model on `num_steps` batches
 
     Args:
         model: (torch.nn.Module) the neural network
         optimizer: (torch.optim) optimizer for parameters of model
         loss_fn: a function that takes batch_output and batch_labels and computes the loss for the batch
-        dataloader: (DataLoader) a torch.utils.data.DataLoader object that fetches training data
+        train_dataloader: (DataLoader) a torch.utils.data.DataLoader object that fetches training data
         params: (Params) hyperparameters
         num_steps: (int) number of batches to train on, each of size params.batch_size
     """
@@ -44,10 +44,13 @@ def train(model, optimizer, loss_fn, dataloader, params):
     # summary for current training loop and a running average object for loss
     summ = []
     loss_avg = utils.RunningAverage()
+    n_iterations_no_change = 0
+    best_validation_loss = float('inf')
+    early_stop_reached = False
 
     # Use tqdm for progress bar
-    with tqdm(total=len(dataloader)) as t:
-        for i, (train_batch, labels_batch) in enumerate(dataloader):
+    with tqdm(total=len(train_dataloader)) as t:
+        for i, (train_batch, labels_batch) in enumerate(train_dataloader):
             # move to GPU if available
             if params.cuda:
                 train_batch, labels_batch = train_batch.cuda(
@@ -66,7 +69,6 @@ def train(model, optimizer, loss_fn, dataloader, params):
 
             # Evaluate summaries only once in a while
             if i % params.save_summary_steps == 0:
-                # extract data from torch Variable, move to cpu, convert to numpy arrays
                 output_batch = output_batch.data.cpu().numpy()
                 labels_batch = labels_batch.data.cpu().numpy()
 
@@ -74,6 +76,18 @@ def train(model, optimizer, loss_fn, dataloader, params):
                 summary_batch = net.calculate_metrics(output_batch, labels_batch)
                 summary_batch['loss'] = loss.item()
                 summ.append(summary_batch)
+
+            if params.early_stopping and i % params.validation_steps == 0:
+                # Verify loss is improving on the validation set, else early stop
+                cur_val_loss = evaluate(model, loss_fn, val_dataloader, params, calculate_full_metrics=False)['loss']
+                if cur_val_loss > best_validation_loss - params.tolerance:
+                    n_iterations_no_change += 1
+                    if n_iterations_no_change >= params.n_iterations_no_change:
+                        early_stop_reached = True
+                        break
+                else:
+                    best_validation_loss = cur_val_loss
+                    n_iterations_no_change = 0
 
             # update the average loss
             loss_avg.update(loss.item())
@@ -87,6 +101,8 @@ def train(model, optimizer, loss_fn, dataloader, params):
     metrics_string = " ; ".join("{}: {:05.3f}".format(k, v)
                                 for k, v in metrics_mean.items())
     logging.info("- Train metrics: " + metrics_string)
+
+    return early_stop_reached
 
 
 def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_fn, metrics, params, model_dir,
@@ -118,10 +134,10 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
         logging.info("Epoch {}/{}".format(epoch + 1, params.num_epochs))
 
         # compute number of batches in one epoch (one full pass over the training set)
-        train(model, optimizer, loss_fn, train_dataloader, params)
+        train(model, optimizer, loss_fn, train_dataloader, val_dataloader, params)
 
         # Evaluate for one epoch on validation set
-        val_metrics = evaluate(model, loss_fn, val_dataloader, metrics, params)
+        val_metrics = evaluate(model, loss_fn, val_dataloader, params)
 
         val_auc_average = val_metrics['AUC Average']
         is_best = val_auc_average >= best_auc_average
