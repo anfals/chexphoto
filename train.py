@@ -79,7 +79,7 @@ def train(model, optimizer, loss_fn, train_dataloader, val_dataloader, params):
                 summary_batch['loss'] = loss.item()
                 summ.append(summary_batch)
 
-            if params.early_stopping and i % params.validation_steps == 0:
+            if params.early_stopping and i % params.validation_steps == 0 and i > 0:
                 # Verify loss is improving on the validation set, else early stop
                 cur_val_loss = evaluate(model, loss_fn, val_dataloader, params, calculate_full_metrics=False)['loss']
                 if cur_val_loss > best_validation_loss - params.tolerance:
