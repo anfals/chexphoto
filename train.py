@@ -81,7 +81,7 @@ def train(model, optimizer, loss_fn, train_dataloader, val_dataloader, params):
 
             if params.early_stopping and i % params.validation_steps == 0 and i > 0:
                 # Verify loss is improving on the validation set, else early stop
-                cur_val_loss = evaluate(model, loss_fn, val_dataloader, params, calculate_full_metrics=False)['loss']
+                cur_val_loss = evaluate(model, loss_fn, val_dataloader, params, calculate_full_metrics=False, limit_number_iterations=True)['loss']
                 if cur_val_loss > best_validation_loss - params.tolerance:
                     n_iterations_no_change += 1
                     if n_iterations_no_change >= params.n_iterations_no_change:
@@ -90,6 +90,7 @@ def train(model, optimizer, loss_fn, train_dataloader, val_dataloader, params):
                     print(f'Validation scores did not improve. Patience ${n_iterations_no_change} hit')
                 else:
                     best_validation_loss = cur_val_loss
+                    print(f'Validation scores improved. Loss is ${cur_val_loss}')
                     n_iterations_no_change = 0
 
             # update the average loss
@@ -182,6 +183,7 @@ if __name__ == '__main__':
 
     # use GPU if available
     params.cuda = torch.cuda.is_available()
+    print(f"Cuda is available {params.cuda}")
 
     # Set the random seed for reproducible experiments
     torch.manual_seed(230)

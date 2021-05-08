@@ -21,7 +21,7 @@ parser.add_argument('--restore_file', default='best', help="name of the file in 
                      containing weights to load")
 
 
-def evaluate(model, loss_fn, dataloader, params, calculate_full_metrics=True):
+def evaluate(model, loss_fn, dataloader, params, calculate_full_metrics=True, limit_number_iterations=False):
     """Evaluate the model on `num_steps` batches.
 
     Args:
@@ -68,6 +68,9 @@ def evaluate(model, loss_fn, dataloader, params, calculate_full_metrics=True):
             else:
                 all_outputs = np.concatenate([all_outputs, output_batch], axis=0)
                 all_labels = np.concatenate([all_labels, labels_batch], axis=0)
+
+            if limit_number_iterations and num_batches > 150:
+                break
 
 
     if calculate_full_metrics:

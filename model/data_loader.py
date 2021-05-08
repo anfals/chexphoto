@@ -122,7 +122,7 @@ def fetch_dataloader(types, data_dir, params):
     for index, split in enumerate(['train', 'val', 'test']):
         if split in types:
             df = dfs[index]
-            dl = DataLoader(CheXPertDataset(df, data_dir, preprocess), batch_size=params.batch_size, shuffle=split == 'train',
+            dl = DataLoader(CheXPertDataset(df, data_dir, preprocess), batch_size=params.batch_size, shuffle=True,
                             num_workers=params.num_workers,
                             pin_memory=params.cuda)
             dataloaders[split] = dl
