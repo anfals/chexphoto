@@ -51,6 +51,8 @@ def train(model, optimizer, loss_fn, train_dataloader, val_dataloader, params):
     # Use tqdm for progress bar
     with tqdm(total=len(train_dataloader)) as t:
         for i, (train_batch, labels_batch) in enumerate(train_dataloader):
+            print(f'Starting iteration {i}')
+
             # move to GPU if available
             if params.cuda:
                 train_batch, labels_batch = train_batch.cuda(
@@ -85,6 +87,7 @@ def train(model, optimizer, loss_fn, train_dataloader, val_dataloader, params):
                     if n_iterations_no_change >= params.n_iterations_no_change:
                         early_stop_reached = True
                         break
+                    print(f'Validation scores did not improve. Patience ${n_iterations_no_change} hit')
                 else:
                     best_validation_loss = cur_val_loss
                     n_iterations_no_change = 0
@@ -134,7 +137,7 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
         logging.info("Epoch {}/{}".format(epoch + 1, params.num_epochs))
 
         # compute number of batches in one epoch (one full pass over the training set)
-        train(model, optimizer, loss_fn, train_dataloader, val_dataloader, params)
+        early_stop_reached = train(model, optimizer, loss_fn, train_dataloader, val_dataloader, params)
 
         # Evaluate for one epoch on validation set
         val_metrics = evaluate(model, loss_fn, val_dataloader, params)
@@ -163,6 +166,9 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
         last_json_path = os.path.join(
             model_dir, "metrics_val_last_weights.json")
         utils.save_dict_to_json(val_metrics, last_json_path)
+
+        if early_stop_reached:
+            print(f'Early stopping on Epoch {epoch}')
 
 
 if __name__ == '__main__':
