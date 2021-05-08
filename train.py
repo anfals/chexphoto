@@ -26,12 +26,13 @@ parser.add_argument('--restore_file', default=None,
                     training")  # 'best' or 'train'
 
 
-def train(model, optimizer, loss_fn, train_dataloader, val_dataloader, params):
+def train(model, optimizer, scheduler, loss_fn, train_dataloader, val_dataloader, params):
     """Train the model on `num_steps` batches
 
     Args:
         model: (torch.nn.Module) the neural network
         optimizer: (torch.optim) optimizer for parameters of model
+        scheduler: (torch.optim) scheduler used to decay the learning rate if validation loss not improving
         loss_fn: a function that takes batch_output and batch_labels and computes the loss for the batch
         train_dataloader: (DataLoader) a torch.utils.data.DataLoader object that fetches training data
         params: (Params) hyperparameters
@@ -87,10 +88,11 @@ def train(model, optimizer, loss_fn, train_dataloader, val_dataloader, params):
                     if n_iterations_no_change >= params.n_iterations_no_change:
                         early_stop_reached = True
                         break
-                    print(f'Validation scores did not improve. Patience ${n_iterations_no_change} hit')
+                    print(f'Validation scores did not improve. Patience {n_iterations_no_change} hit. Decaying learning rate')
+                    scheduler.step()
                 else:
                     best_validation_loss = cur_val_loss
-                    print(f'Validation scores improved. Loss is ${cur_val_loss}')
+                    print(f'Validation scores improved. Loss is {cur_val_loss}')
                     n_iterations_no_change = 0
 
             # update the average loss
@@ -133,12 +135,14 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
 
     best_auc_average = 0.0
 
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1)
+
     for epoch in range(params.num_epochs):
         # Run one epoch
         logging.info("Epoch {}/{}".format(epoch + 1, params.num_epochs))
 
         # compute number of batches in one epoch (one full pass over the training set)
-        early_stop_reached = train(model, optimizer, loss_fn, train_dataloader, val_dataloader, params)
+        early_stop_reached = train(model, optimizer, scheduler, loss_fn, train_dataloader, val_dataloader, params)
 
         # Evaluate for one epoch on validation set
         val_metrics = evaluate(model, loss_fn, val_dataloader, params)
