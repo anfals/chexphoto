@@ -138,6 +138,8 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
 
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1)
 
+    epoch_patience = 0
+
     for epoch in range(params.num_epochs):
         # Run one epoch
         logging.info("Epoch {}/{}".format(epoch + 1, params.num_epochs))
@@ -162,12 +164,16 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
         if is_best:
             logging.info("- Found new best accuracy")
             best_auc_average = val_auc_average
-
             # Save best val metrics in a json file in the model directory
             best_json_path = os.path.join(
                 model_dir, "metrics_val_best_weights.json")
             utils.save_dict_to_json(val_metrics, best_json_path)
-
+        elif params.epoch_early_stopping:
+            epoch_patience += 1
+            scheduler.step()
+            logging.info(f'Validation score did not improve after epoch. Decaying learning rate')
+            if epoch_patience >= params.n_iterations_no_change:
+                early_stop_reached = True
         # Save latest val metrics in a json file in the model directory
         last_json_path = os.path.join(
             model_dir, "metrics_val_last_weights.json")

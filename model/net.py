@@ -8,7 +8,7 @@ import torch.nn.functional as F
 import torchvision.models as models
 
 from sklearn import metrics
-from sklearn.metrics import matthews_corrcoef, auc, roc_curve
+from sklearn.metrics import matthews_corrcoef, auc, roc_curve, precision_score, recall_score, f1_score
 
 from model.data_loader import CheXPertDataset
 
@@ -99,12 +99,13 @@ def build_pretrained_densenet():
     )
 
     # We are going to freeze all the but the last denseblock and the classifier
-    for param in model.parameters():
-        param.requires_grad = False
-    for param in model.features.denseblock4.parameters():
-        param.requires_grad = True
-    for param in model.classifier.parameters():
-        param.requires_grad = True
+    # Nevermind this sucked
+    # for param in model.parameters():
+    #     param.requires_grad = False
+    # for param in model.features.denseblock4.parameters():
+    #     param.requires_grad = True
+    # for param in model.classifier.parameters():
+    #     param.requires_grad = True
 
     return model
 
@@ -150,16 +151,23 @@ def calculate_metrics(outputs, labels):
 
     metrics_dict = {}
     for index, observation in enumerate(CheXPertDataset.observations):
-        cur_labels, cur_predictions = labels[:, index], np.rint(outputs[:, index])
-        mcc_value = matthews_corrcoef(cur_labels, cur_predictions)
+        cur_labels, cur_predictions, cur_predictions_rounded = labels[:, index], outputs[:, index], np.rint(outputs[:, index])
+        mcc_value = matthews_corrcoef(cur_labels, cur_predictions_rounded)
 
         fpr, tpr, thresholds = roc_curve(cur_labels, cur_predictions)
         auc_value = auc(fpr, tpr)
         auc_value = 0 if math.isnan(auc_value) else auc_value
 
+        precision = precision_score(cur_labels, cur_predictions_rounded)
+        recall = recall_score(cur_labels, cur_predictions_rounded)
+        f1 = f1_score(cur_labels, cur_predictions_rounded)
+
         metrics_dict[f'{observation} MCC'] = mcc_value
         metrics_dict[f'{observation} AUC'] = auc_value
-        metrics_dict[f'{observation} Accuracy'] = np.average(cur_labels == cur_predictions)
+        metrics_dict[f'{observation} Precision'] = precision
+        metrics_dict[f'{observation} Recall'] = recall
+        metrics_dict[f'{observation} f1'] = f1
+        metrics_dict[f'{observation} Accuracy'] = np.average(cur_labels == cur_predictions_rounded)
 
         mcc_sum += mcc_value
         auc_sum += auc_value
