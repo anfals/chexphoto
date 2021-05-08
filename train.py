@@ -87,12 +87,13 @@ def train(model, optimizer, scheduler, loss_fn, train_dataloader, val_dataloader
                     n_iterations_no_change += 1
                     if n_iterations_no_change >= params.n_iterations_no_change:
                         early_stop_reached = True
+                        logging.info("Patience hit. Early stopping")
                         break
-                    print(f'Validation scores did not improve. Patience {n_iterations_no_change} hit. Decaying learning rate')
+                    logging.info(f'Validation scores did not improve. Patience {n_iterations_no_change} hit. Decaying learning rate')
                     scheduler.step()
                 else:
                     best_validation_loss = cur_val_loss
-                    print(f'Validation scores improved. Loss is {cur_val_loss}')
+                    logging.info(f'Validation scores improved. Loss is {cur_val_loss}')
                     n_iterations_no_change = 0
 
             # update the average loss
@@ -173,7 +174,8 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
         utils.save_dict_to_json(val_metrics, last_json_path)
 
         if early_stop_reached:
-            print(f'Early stopping on Epoch {epoch}')
+            logging.info(f'Early stopping on Epoch {epoch}')
+            break
 
 
 if __name__ == '__main__':

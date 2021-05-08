@@ -97,6 +97,15 @@ def build_pretrained_densenet():
         nn.Linear(model.classifier.in_features, 5),
         nn.Sigmoid()
     )
+
+    # We are going to freeze all the but the last denseblock and the classifier
+    for param in model.parameters():
+        param.requires_grad = False
+    for param in model.features.denseblock4.parameters():
+        param.requires_grad = True
+    for param in model.classifier.parameters():
+        param.requires_grad = True
+
     return model
 
 
