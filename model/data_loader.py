@@ -37,7 +37,7 @@ class CheXPertDataset(Dataset):
     """
     A standard PyTorch definition of Dataset which defines the functions __len__ and __getitem__.
     """
-    def __init__(self, data_df, transform):
+    def __init__(self, data_df, data_dir, transform):
         """
         Store the filenames of the jpgs to use. Specifies transforms to apply on images.
 
@@ -52,7 +52,7 @@ class CheXPertDataset(Dataset):
             file_path = row["Path"]
             # TODO: verify this path stuff later
             file_path = os.path.relpath(file_path, CheXPertDataset.path)
-            file_path = os.path.join("data", file_path)
+            file_path = os.path.join(data_dir, file_path)
 
             if os.path.exists(file_path):
                 self.filenames.append(file_path)
@@ -122,7 +122,7 @@ def fetch_dataloader(types, data_dir, params):
     for index, split in enumerate(['train', 'val', 'test']):
         if split in types:
             df = dfs[index]
-            dl = DataLoader(CheXPertDataset(df, preprocess), batch_size=params.batch_size, shuffle=split == 'train',
+            dl = DataLoader(CheXPertDataset(df, data_dir, preprocess), batch_size=params.batch_size, shuffle=split == 'train',
                             num_workers=params.num_workers,
                             pin_memory=params.cuda)
             dataloaders[split] = dl
