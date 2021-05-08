@@ -65,6 +65,8 @@ class CheXPertDataset(Dataset):
                     else:
                         label[index] = 1
                 self.labels.append(label)
+            else:
+                print(f'File was not found at path ${file_path}')
 
         self.transform = transform
 
@@ -112,7 +114,7 @@ def fetch_dataloader(types, data_dir, params):
     train_df = train_df.sample(frac=1, random_state=2)
 
     # Split train into our training and validation sets
-    num_train = int(train_df.shape[0] * 0.7)
+    num_train = int(train_df.shape[0] * 0.9)
     train_df, val_df = train_df.iloc[:num_train, :], train_df.iloc[num_train:, :]
 
     dfs = [train_df, val_df, test_df]
