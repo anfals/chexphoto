@@ -7,7 +7,7 @@
     "save_summary_steps": 100,
     "num_workers": 2,
     "early_stopping": true,
-    "validation_steps": 100,
+    "validation_steps": 500,
     "tolerance": 1e-5,
-    "n_iterations_no_change": 10
+    "n_iterations_no_change": 5
 }
