@@ -124,7 +124,7 @@ if __name__ == '__main__':
     model = net.build_pretrained_densenet()
     model = model.cuda() if params.cuda else model
 
-    loss_fn = nn.BCEWithLogitsLossLoss()
+    loss_fn = nn.BCEWithLogitsLoss()
 
     logging.info("Starting evaluation")
 

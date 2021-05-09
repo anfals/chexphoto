@@ -31,7 +31,6 @@ preprocess = transforms.Compose([
 
 
 class CheXPertDataset(Dataset):
-    path = "CheXpert-v1.0-small"
     observations = ["Pleural Effusion", "Edema", "Atelectasis", "Consolidation", "Cardiomegaly"]
 
     """
@@ -51,7 +50,7 @@ class CheXPertDataset(Dataset):
         for index, row in data_df.iterrows():
             file_path = row["Path"]
             # TODO: verify this path stuff later
-            file_path = os.path.relpath(file_path, CheXPertDataset.path)
+            file_path = "/".join(file_path.split("/")[1:])
             file_path = os.path.join(data_dir, file_path)
 
             if os.path.exists(file_path):
