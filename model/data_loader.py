@@ -6,6 +6,9 @@ from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as transforms
 import pandas as pd
 import math
+from PIL import ImageFile
+
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 # borrowed from http://pytorch.org/tutorials/advanced/neural_style_tutorial.html
 # and http://pytorch.org/tutorials/beginner/data_loading_tutorial.html
