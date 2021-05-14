@@ -14,6 +14,7 @@ from tqdm import tqdm
 import utils
 import model.net as net
 import model.data_loader as data_loader
+import model.data_loader_mixed as data_loader_mixed
 from evaluate import evaluate
 
 parser = argparse.ArgumentParser()
@@ -24,6 +25,7 @@ parser.add_argument('--model_dir', default='experiments/base_model',
 parser.add_argument('--restore_file', default=None,
                     help="Optional, name of the file in --model_dir containing weights to reload before \
                     training")  # 'best' or 'train'
+parser.add_argument('--mixed',  action='store_true', help="Whether this is a mixed training experiment")
 
 
 def train(model, optimizer, scheduler, loss_fn, train_dataloader, val_dataloader, params):
@@ -209,8 +211,12 @@ if __name__ == '__main__':
     logging.info("Loading the datasets...")
 
     # fetch dataloaders
-    dataloaders = data_loader.fetch_dataloader(
-        ['train', 'val'], args.data_dir, params)
+    if args.mixed:
+        dataloaders = data_loader_mixed.fetch_dataloader(
+            ['train', 'val'], args.data_dir, params)
+    else:
+        dataloaders = data_loader.fetch_dataloader(
+            ['train', 'val'], args.data_dir, params)
     train_dl = dataloaders['train']
     val_dl = dataloaders['val']
 
