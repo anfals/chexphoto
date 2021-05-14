@@ -91,8 +91,7 @@ def fetch_dataloader(types, data_dir, params):
     dataloaders = {}
 
     cheXPert_path = "CheXpert-v1.0-small"
-    # TODO: update this
-    cheXPhoto_path = "CheXpert-v1.0-small2"
+    cheXPhoto_path = "CheXphoto-v1.0"
 
     # Do everything for CheXPert first
     # load the pandas dataframe for the csv files describing the datasets
