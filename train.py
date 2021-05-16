@@ -26,6 +26,7 @@ parser.add_argument('--restore_file', default=None,
                     help="Optional, name of the file in --model_dir containing weights to reload before \
                     training")  # 'best' or 'train'
 parser.add_argument('--mixed',  action='store_true', help="Whether this is a mixed training experiment")
+parser.add_argument('--freeze',  action='store_true', help="Whether to freeze layers from a restored model")
 
 
 def train(model, optimizer, scheduler, loss_fn, train_dataloader, val_dataloader, params):
@@ -114,8 +115,8 @@ def train(model, optimizer, scheduler, loss_fn, train_dataloader, val_dataloader
     return early_stop_reached
 
 
-def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_fn, metrics, params, model_dir,
-                       restore_file=None):
+def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_fn, params, model_dir,
+                       restore_file=None, freeze=False):
     """Train the model and evaluate every epoch.
 
     Args:
@@ -128,6 +129,7 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
         params: (Params) hyperparameters
         model_dir: (string) directory containing config, weights and log
         restore_file: (string) optional- name of file to restore from (without its extension .pth.tar)
+        freeze: (boolean) if restore_file, whether to freeze all but the last layer
     """
     # reload weights from restore_file if specified
     if restore_file is not None:
@@ -135,6 +137,14 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
             args.model_dir, args.restore_file + '.pth.tar')
         logging.info("Restoring parameters from {}".format(restore_path))
         utils.load_checkpoint(restore_path, model, optimizer)
+
+        if freeze:
+            for param in model.parameters():
+                param.requires_grad = False
+            # for param in model.features.denseblock4.parameters():
+            #     param.requires_grad = True
+            for param in model.classifier.parameters():
+                param.requires_grad = True
 
     best_auc_average = 0.0
 
@@ -233,5 +243,4 @@ if __name__ == '__main__':
 
     # Train the model
     logging.info("Starting training for {} epoch(s)".format(params.num_epochs))
-    train_and_evaluate(model, train_dl, val_dl, optimizer, loss_fn, metrics, params, args.model_dir,
-                       args.restore_file)
+    train_and_evaluate(model, train_dl, val_dl, optimizer, loss_fn, params, args.model_dir, args.restore_file, args.freeze)
