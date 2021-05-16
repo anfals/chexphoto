@@ -139,6 +139,7 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
         utils.load_checkpoint(restore_path, model, optimizer)
 
         if freeze:
+            print("Freezing restore file parameters")
             for param in model.parameters():
                 param.requires_grad = False
             # for param in model.features.denseblock4.parameters():
