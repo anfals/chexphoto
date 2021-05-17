@@ -142,8 +142,8 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
             print("Freezing restore file parameters")
             for param in model.parameters():
                 param.requires_grad = False
-            # for param in model.features.denseblock4.parameters():
-            #     param.requires_grad = True
+            for param in model.features.denseblock4.parameters():
+                param.requires_grad = True
             for param in model.classifier.parameters():
                 param.requires_grad = True
 
