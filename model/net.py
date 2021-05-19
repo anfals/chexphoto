@@ -10,6 +10,10 @@ import torchvision.models as models
 from sklearn import metrics
 from sklearn.metrics import matthews_corrcoef, auc, roc_curve, precision_score, recall_score, f1_score
 
+import os.path
+from os import path
+import urllib.request
+
 from model.data_loader import CheXPertDataset
 
 
@@ -90,9 +94,46 @@ class Net(nn.Module):
         # since it is numerically more stable)
         return F.log_softmax(s, dim=1)
 
-def build_pretrained_densenet():
+def build_pretrained_densenet(cuda_enabled, moco_pretrained):
     # Start with pretrained densenet
     model = models.densenet121(pretrained=True)
+
+    if moco_pretrained:
+        # check if we need to download the model
+        if not path.exists("pretrained_moco.bin"):
+            urllib.request.urlretrieve(
+                "https://dl.fbaipublicfiles.com/CovidPrognosis/pretrained_models/mimic-chexpert_lr_0.01_bs_128_fd_128_qs_65536.pt",
+                "pretrained_moco.bin")
+        if cuda_enabled:
+            pretrained_dict = torch.load("pretrained_moco.bin")["state_dict"]
+        else:
+            pretrained_dict = torch.load("pretrained_moco.bin", map_location='cpu')["state_dict"]
+        state_dict = {}
+        for k, v in pretrained_dict.items():
+            if k.startswith("model.encoder_q."):
+                k = k.replace("model.encoder_q.", "")
+                state_dict[k] = v
+
+        if "model.encoder_q.classifier.weight" in pretrained_dict.keys():
+            feature_dim = pretrained_dict[
+                "model.encoder_q.classifier.weight"
+            ].shape[0]
+            in_features = pretrained_dict[
+                "model.encoder_q.classifier.weight"
+            ].shape[1]
+            model.classifier = torch.nn.Linear(in_features, feature_dim)
+            model.load_state_dict(state_dict)
+        elif "model.encoder_q.fc.weight" in pretrained_dict.keys():
+            feature_dim = pretrained_dict["model.encoder_q.fc.weight"].shape[0]
+            in_features = pretrained_dict["model.encoder_q.fc.weight"].shape[1]
+            model.fc = torch.nn.Linear(in_features, feature_dim)
+            model.load_state_dict(state_dict)
+        else:
+            raise RuntimeError("Unrecognized classifier.")
+
+
+
+
     model.classifier = nn.Sequential(
         nn.Linear(model.classifier.in_features, 5)
     )

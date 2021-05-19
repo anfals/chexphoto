@@ -121,7 +121,7 @@ if __name__ == '__main__':
     logging.info("- done.")
 
     # Define the model
-    model = net.build_pretrained_densenet()
+    model = net.build_pretrained_densenet(False, False)
     model = model.cuda() if params.cuda else model
 
     loss_fn = nn.BCEWithLogitsLoss()

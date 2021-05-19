@@ -27,6 +27,7 @@ parser.add_argument('--restore_file', default=None,
                     training")  # 'best' or 'train'
 parser.add_argument('--mixed',  action='store_true', help="Whether this is a mixed training experiment")
 parser.add_argument('--freeze',  action='store_true', help="Whether to freeze layers from a restored model")
+parser.add_argument('--moco',  action='store_true', help="Whether to initialize the model using Facebook moco pretrained model")
 
 
 def train(model, optimizer, scheduler, loss_fn, train_dataloader, val_dataloader, params):
@@ -234,7 +235,7 @@ if __name__ == '__main__':
     logging.info("- done.")
 
     # Define the model and optimizer
-    model = net.build_pretrained_densenet()
+    model = net.build_pretrained_densenet(params.cuda, args.moco)
     model = model.cuda() if params.cuda else model
     optimizer = optim.Adam(model.parameters(), lr=params.learning_rate)
 
