@@ -99,6 +99,7 @@ def build_pretrained_densenet(cuda_enabled, moco_pretrained):
     model = models.densenet121(pretrained=True)
 
     if moco_pretrained:
+        print("Loading MOCO weights")
         # check if we need to download the model
         if not path.exists("pretrained_moco.bin"):
             urllib.request.urlretrieve(
