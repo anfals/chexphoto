@@ -40,18 +40,18 @@ def launch_training_job(parent_dir, data_dir, job_name, params):
 
     # Do evaluations on the CheXpert and CheXPhoto validation sets
     # CheXpert
-    data_dir = os.path.join(data_dir, "CheXpert-v1.0-small")
+    data_dir_pert = os.path.join(data_dir, "CheXpert-v1.0-small")
     cmd = "{python} evaluate.py --model_dir={model_dir} --data_dir {data_dir} --restore_file best".format(python=PYTHON,
                                                                                                           model_dir=model_dir,
-                                                                                                          data_dir=data_dir)
+                                                                                                          data_dir=data_dir_pert)
     print(cmd)
     check_call(cmd, shell=True)
 
     # CheXphoto
-    data_dir = os.path.join(data_dir, "CheXphoto-v1.0")
+    data_dir_photo = os.path.join(data_dir, "CheXphoto-v1.0")
     cmd = "{python} evaluate.py --model_dir={model_dir} --data_dir {data_dir} --restore_file best".format(python=PYTHON,
-                                                                                            model_dir=model_dir,
-                                                                                            data_dir=data_dir)
+                                                                                                          model_dir=model_dir,
+                                                                                                          data_dir=data_dir_photo)
     print(cmd)
     check_call(cmd, shell=True)
 
