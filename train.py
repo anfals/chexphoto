@@ -16,6 +16,7 @@ import model.net as net
 import model.data_loader as data_loader
 import model.data_loader_mixed as data_loader_mixed
 from evaluate import evaluate
+from model import data_loader_budget
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_dir', default='data',
@@ -28,6 +29,8 @@ parser.add_argument('--restore_file', default=None,
 parser.add_argument('--mixed',  action='store_true', help="Whether this is a mixed training experiment")
 parser.add_argument('--freeze',  action='store_true', help="Whether to freeze layers from a restored model")
 parser.add_argument('--moco',  action='store_true', help="Whether to initialize the model using Facebook moco pretrained model")
+parser.add_argument('--budget',  action='store_true', help="Whether to do budget training")
+
 
 
 def train(model, optimizer, scheduler, loss_fn, train_dataloader, val_dataloader, params):
@@ -225,6 +228,9 @@ if __name__ == '__main__':
     # fetch dataloaders
     if args.mixed:
         dataloaders = data_loader_mixed.fetch_dataloader(
+            ['train', 'val'], args.data_dir, params)
+    elif args.budget:
+        dataloaders = data_loader_budget.fetch_dataloader(
             ['train', 'val'], args.data_dir, params)
     else:
         dataloaders = data_loader.fetch_dataloader(
