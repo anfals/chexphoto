@@ -123,7 +123,7 @@ def fetch_dataloader(types, data_dir, params):
 
     # Sample from the two train sets
     photo_count = params.photo_count
-    pert_count = 20000 - photo_count
+    pert_count = 10000 - photo_count
 
     train_df_pert = train_df_pert.sample(n=pert_count, random_state=2)
     train_df_photo = train_df_photo.sample(n=photo_count, random_state=2)
