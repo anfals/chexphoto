@@ -66,7 +66,8 @@ if __name__ == "__main__":
     params = utils.Params(json_path)
 
     # Change the photo counts
-    photo_counts = [0, 2000, 4000, 6000, 8000, 10000]
+    #photo_counts = [0, 2000, 4000, 6000, 8000, 10000]
+    photo_counts = [5000]
 
     for photo_count in photo_counts:
         params.photo_count = photo_count
