@@ -149,7 +149,7 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
             for param in model.classifier.parameters():
                 param.requires_grad = True
 
-    best_auc_average = 0.0
+    best_mcc_average = 0.0
 
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1)
 
@@ -165,8 +165,8 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
         # Evaluate for one epoch on validation set
         val_metrics = evaluate(model, loss_fn, val_dataloader, params)
 
-        val_auc_average = val_metrics['AUC Average']
-        is_best = val_auc_average >= best_auc_average
+        val_mcc_average = val_metrics['MCC Average']
+        is_best = val_mcc_average >= best_mcc_average
 
         # Save weights
         utils.save_checkpoint({'epoch': epoch + 1,
@@ -177,8 +177,8 @@ def train_and_evaluate(model, train_dataloader, val_dataloader, optimizer, loss_
 
         # If best_eval, best_save_path
         if is_best:
-            logging.info("- Found new best accuracy")
-            best_auc_average = val_auc_average
+            logging.info("- Found new best MCC")
+            best_mcc_average = val_mcc_average
             # Save best val metrics in a json file in the model directory
             best_json_path = os.path.join(
                 model_dir, "metrics_val_best_weights.json")
