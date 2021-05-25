@@ -39,7 +39,7 @@ class CheXPertDataset(Dataset):
     """
     A standard PyTorch definition of Dataset which defines the functions __len__ and __getitem__.
     """
-    def __init__(self, data_df, data_dir, transform):
+    def __init__(self, data_df, data_dir, transform, include_filenames=False):
         """
         Store the filenames of the jpgs to use. Specifies transforms to apply on images.
 
@@ -49,10 +49,10 @@ class CheXPertDataset(Dataset):
         """
         self.filenames = []
         self.labels = []
+        self.include_filenames = include_filenames
 
         for index, row in data_df.iterrows():
             file_path = row["Path"]
-            # TODO: verify this path stuff later
             file_path = "/".join(file_path.split("/")[1:])
             file_path = os.path.join(data_dir, file_path)
 
@@ -89,10 +89,12 @@ class CheXPertDataset(Dataset):
         """
         image = Image.open(self.filenames[idx])  # PIL image
         image = self.transform(image)
+        if self.include_filenames:
+            return image, self.filenames[idx], self.labels[idx]
         return image, self.labels[idx]
 
 
-def fetch_dataloader(types, data_dir, params):
+def fetch_dataloader(types, data_dir, params, include_filenames = False):
     """
     Fetches the DataLoader object for each type in types from data_dir.
 
@@ -124,7 +126,7 @@ def fetch_dataloader(types, data_dir, params):
     for index, split in enumerate(['train', 'val', 'test']):
         if split in types:
             df = dfs[index]
-            dl = DataLoader(CheXPertDataset(df, data_dir, preprocess), batch_size=params.batch_size, shuffle=True,
+            dl = DataLoader(CheXPertDataset(df, data_dir, preprocess, include_filenames=include_filenames), batch_size=params.batch_size, shuffle=True,
                             num_workers=params.num_workers,
                             pin_memory=params.cuda)
             dataloaders[split] = dl
