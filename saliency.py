@@ -97,7 +97,6 @@ if __name__ == '__main__':
 
     # Define the model
     model = net.build_pretrained_densenet(False, False)
-    model = model.cuda() if cuda else model
 
     # Reload weights from the saved file
     utils.load_checkpoint(os.path.join(
